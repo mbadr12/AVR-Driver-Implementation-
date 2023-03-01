@@ -103,7 +103,7 @@ void CLCD_voidSendData(u8 Copy_u8Data)
 }
 
 #endif
-void CLCD_voidSendString(const char* Copy_Pcstring)
+void CLCD_voidSendString(const char *Copy_Pcstring)
 {
 	u32 Local_u8Counter=0;
 	while(Copy_Pcstring[Local_u8Counter] != '\0')
@@ -147,17 +147,23 @@ void CLCD_void_WriteSpecialCharacter(u8* Copy_pu8Pattern , u8 Copy_u8PatternNumb
 	CLCD_voidSendData(Copy_u8PatternNumber);
 }
 
-void CLCD_void_SendNumber(s8* Copy_ps8String , u32 Copy_u32Number)
+void CLCD_void_SendNumber(s32 Copy_s32Number)
 {
+	s8 Local_u8String[20];
 	u8 Local_u8NumLength=0,Local_u8Rem,Local_u8Counter;
-	u32 Local_u32Num=Copy_u32Number;
-	if(Copy_u32Number==0)
+	u32 Local_u32Num=Copy_s32Number;
+	if(Copy_s32Number==0)
 	{
-		Copy_ps8String[0]='0';
-		Copy_ps8String[1]='\0';
+		Local_u8String[0]='0';
+		Local_u8String[1]='\0';
 	}
 	else
 	{
+		if(Copy_s32Number<0)
+		{
+			CLCD_voidSendData('-');
+			Copy_s32Number*=-1;
+		}
 		while(Local_u32Num!=0)
 		{
 			Local_u8NumLength++;
@@ -165,11 +171,11 @@ void CLCD_void_SendNumber(s8* Copy_ps8String , u32 Copy_u32Number)
 		}
 		for(Local_u8Counter=0;Local_u8Counter<Local_u8NumLength;Local_u8Counter++)
 		{
-			Local_u8Rem=Copy_u32Number%10;
-			Copy_u32Number/=10;
-			Copy_ps8String[Local_u8NumLength-(Local_u8Counter+1)]=Local_u8Rem+'0';
+			Local_u8Rem=Copy_s32Number%10;
+			Copy_s32Number/=10;
+			Local_u8String[Local_u8NumLength-(Local_u8Counter+1)]=Local_u8Rem+'0';
 		}
-		Copy_ps8String[Local_u8NumLength]='\0';
+		Local_u8String[Local_u8NumLength]='\0';
 	}
-	CLCD_voidSendString(Copy_ps8String);
+	CLCD_voidSendString(Local_u8String);
 }
