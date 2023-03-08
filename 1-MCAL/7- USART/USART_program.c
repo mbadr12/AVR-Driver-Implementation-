@@ -21,7 +21,7 @@ static char* USART_pcString=NULL;
 static u8 USART_u8ISRSource=0;
 static u8 USART_u8CharIndex=0;
 static u8 USART_u8BufferLength=0;
-static u8* USART_pu8Data=NULL;
+static char* USART_pu8Data=NULL;
 
 void USART_voidInit(void)
 {
@@ -191,29 +191,17 @@ u8 USART_u8SendStringASynch(const char* Copy_pcharString, void(* Copy_pvNotifica
 u8 USART_u8ReceiveCharSynch(u8 *Copy_pu8Data)
 {
 	u8 Local_u8StateError=OK;
-	u32 Local_u32Counter=0;
 	if(USART_u8BusyState==IDLE)
 	{
 		/*Make USART Busy*/
 		USART_u8BusyState=BUSY;
 		/*Busy waiting For receive Complete*/
-		while((GET_BIT(UCSRA,UCSRA_RXC)==0) && (Local_u32Counter<USART_TIMEOUT))
-		{
-			Local_u32Counter++;
-		}
-		if(Local_u32Counter==USART_TIMEOUT)
-		{
-			Local_u8StateError=NOK;
-		}
-		else
-		{
-			SET_BIT(UCSRA,UCSRA_RXC);
-			/*Send Data*/
-			*Copy_pu8Data=UDR;
-			/*Make USART IDLE*/
-			USART_u8BusyState=IDLE;
-		}
-
+		while(GET_BIT(UCSRA,UCSRA_RXC)==0);
+		SET_BIT(UCSRA,UCSRA_RXC);
+		/*Send Data*/
+		*Copy_pu8Data=UDR;
+		/*Make USART IDLE*/
+		USART_u8BusyState=IDLE;
 	}
 	else
 	{
@@ -236,7 +224,7 @@ u8 USART_u8ReceiveCharASynch(u8 *Copy_pu8Data, void (*Copy_pvNotificationFunc)(v
 			USART_u8BusyState=BUSY;
 			/*Configure ISR Source As Receiving Character*/
 			USART_u8ISRSource=RECEIVE_CHAR;
-			Copy_pu8Data=USART_pu8Data;
+			USART_pu8Data=Copy_pu8Data;
 			USART_pvCallBackFunc=Copy_pvNotificationFunc;
 			/*Receive Complete Interrupt Enable*/
 			SET_BIT(UCSRB,UCSRB_RXCIE);
@@ -282,8 +270,9 @@ u8 USART_u8ReceiveBufferASynch(u8* Copy_pu8Buffer,u8 Copy_u8BufferSize, void (*C
 			USART_u8ISRSource=RECEIVE_STRING;
 			/*Initialize the variables & CallBack Notification Function Globally*/
 			USART_u8CharIndex=0;
-			Copy_pu8Buffer=USART_pu8Data;
+			USART_pcString=Copy_pu8Buffer;
 			USART_pvCallBackFunc=Copy_pvNotificationFunc;
+			USART_u8BufferLength=Copy_u8BufferSize;
 			/*Receive Complete Interrupt Enable*/
 			SET_BIT(UCSRB,UCSRB_RXCIE);
 		}
@@ -344,7 +333,7 @@ void __vector_13 (void)
 	}
 	else if(USART_u8ISRSource==RECEIVE_STRING)
 	{
-		USART_pu8Data[USART_u8CharIndex]=UDR;
+		USART_pcString[USART_u8CharIndex]=UDR;
 		USART_u8CharIndex++;
 		if(USART_u8CharIndex==USART_u8BufferLength)
 		{
